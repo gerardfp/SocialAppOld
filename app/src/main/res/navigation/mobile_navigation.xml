@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/signInFragment">
+
+    <fragment
+        android:id="@+id/signInFragment"
+        android:name="com.company.socialapp.ui.SignInFragment"
+        android:label="fragment_sign_in"
+        tools:layout="@layout/fragment_sign_in" />
+    <fragment
+        android:id="@+id/signOutFragment"
+        android:name="com.company.socialapp.ui.SignOutFragment"
+        android:label="fragment_sign_out"
+        tools:layout="@layout/fragment_sign_out" />
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.company.socialapp.ui.RegisterFragment"
+        android:label="fragment_register"
+        tools:layout="@layout/fragment_register" />
+    <fragment
+        android:id="@+id/postsHomeFragment"
+        android:name="com.company.socialapp.ui.PostsHomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_posts" />
+    <fragment
+        android:id="@+id/postsLikeFragment"
+        android:name="com.company.socialapp.ui.PostsLikeFragment"
+        android:label="Likes"
+        tools:layout="@layout/fragment_posts" />
+    <fragment
+        android:id="@+id/postsMyFragment"
+        android:name="com.company.socialapp.ui.PostsMyFragment"
+        android:label="My Posts"
+        tools:layout="@layout/fragment_posts" />
+    <fragment
+        android:id="@+id/newPostFragment"
+        android:name="com.company.socialapp.ui.NewPostFragment"
+        android:label="fragment_new_post"
+        tools:layout="@layout/fragment_new_post" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.company.socialapp.ui.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
+</navigation>

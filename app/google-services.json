@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "352765620870",
+    "firebase_url": "https://socialapp-bef2d.firebaseio.com",
+    "project_id": "socialapp-bef2d",
+    "storage_bucket": "socialapp-bef2d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:352765620870:android:5aeb6aa4157950b36e1707",
+        "android_client_info": {
+          "package_name": "com.company.socialapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "352765620870-hqm4sk86u1d6hpb0cutpttpi09edrbuf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.company.socialapp",
+            "certificate_hash": "bae4aaa583372fa3bb791bb88fe849b67112bfac"
+          }
+        },
+        {
+          "client_id": "352765620870-oucn7pa3aibvmh52vpoqb1ah1t24det8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfGtUX9gvzk9DAUFzmv8Jiu2VrZrunjGY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "352765620870-oucn7pa3aibvmh52vpoqb1ah1t24det8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
