@@ -5,6 +5,6 @@ import com.google.firebase.firestore.Query;
 
 public class PostsMyFragment extends PostsHomeFragment {
     Query setQuery(){
-        return db.collection("posts").whereEqualTo("uid", mUser.getUid()).limit(50);
+        return db.collection("posts").whereEqualTo("uid", user.getUid()).limit(50);
     }
 }

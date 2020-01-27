@@ -71,7 +71,7 @@ public class SignInFragment extends Fragment {
         view.findViewById(R.id.signInButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                signIn();
+                googleSignIn();
             }
         });
     }
@@ -82,7 +82,7 @@ public class SignInFragment extends Fragment {
         }
     }
 
-    private void signIn() {
+    private void googleSignIn() {
         startActivityForResult(mGoogleSignInClient.getSignInIntent(), RC_SIGN_IN_WITH_GOOGLE);
     }
 

@@ -7,15 +7,8 @@ import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,61 +16,55 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.company.socialapp.AppFragment;
 import com.company.socialapp.GlideApp;
 import com.company.socialapp.MediaFiles;
-import com.company.socialapp.model.Post;
 import com.company.socialapp.R;
+import com.company.socialapp.model.Post;
 import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
+
 import static android.app.Activity.RESULT_OK;
 
-public class NewPostFragment extends Fragment {
-    NavController navController;
+public class NewPostFragment extends AppFragment {
+    private static final int RC_IMAGE_TAKE = 8000;
+    private static final int RC_VIDEO_TAKE = 8001;
+    private static final int RC_IMAGE_PICK = 9000;
+    private static final int RC_VIDEO_PICK = 9001;
+    private static final int RC_AUDIO_PICK = 9002;
 
-    static final int RC_IMAGE_TAKE = 8000;
-    static final int RC_VIDEO_TAKE = 8001;
-    static final int RC_IMAGE_PICK = 9000;
-    static final int RC_VIDEO_PICK = 9001;
-    static final int RC_AUDIO_PICK = 9002;
+    private static final int RC_PERMISSIONS = 1212;
+    private boolean permissionsAcepted = false;
 
-    static final int REQUEST_RECORD_AUDIO_PERMISSION = 1212;
-    private boolean permissionToRecordAccepted = false;
+    private EditText contentEditText;
+    private ImageView previewImageView;
+    private Button publishButton;
+    private Button cameraImageButton;
+    private Button cameraVideoButton;
+    private Button recordAudioButton;
+    private Button galleryImageButton;
+    private Button galleryVideoButton;
+    private Button galleryAudioButton;
 
-    EditText mPostTextField;
-    ImageView imagePreview;
-    Button mPublishButton;
-    Button mCameraImageButton;
-    Button mCameraVideoButton;
-    Button mMicButton;
-    Button mImageButton;
-    Button mVideoButton;
-    Button mAudioButton;
+    private Uri fileUri;
+    private Uri mediaUri;
+    private String mediaType;
 
-    Uri mFileUri;
-
-    Uri mediaUri;
-    String mediaType;
-
-    FirebaseFirestore db;
-    FirebaseUser mUser;
-
-    boolean recording = false;
+    private boolean recording = false;
     private MediaRecorder mRecorder = null;
 
     public NewPostFragment() {}
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -88,86 +75,92 @@ public class NewPostFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        navController = Navigation.findNavController(view);
+        contentEditText = view.findViewById(R.id.contentEditText);
+        previewImageView = view.findViewById(R.id.previewImageView);
+        publishButton = view.findViewById(R.id.publishButton);
+        galleryImageButton = view.findViewById(R.id.galleryImageButton);
+        galleryVideoButton = view.findViewById(R.id.galleryVideoButton);
+        galleryAudioButton = view.findViewById(R.id.galleryAudioButton);
+        cameraImageButton = view.findViewById(R.id.cameraImageButton);
+        cameraVideoButton = view.findViewById(R.id.cameraVideoButton);
+        recordAudioButton = view.findViewById(R.id.recordAudioButton);
 
-        ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
-
-        mUser = FirebaseAuth.getInstance().getCurrentUser();
-        db = FirebaseFirestore.getInstance();
-
-        mPostTextField = view.findViewById(R.id.postText);
-        imagePreview = view.findViewById(R.id.image);
-        mPublishButton = view.findViewById(R.id.publish);
-        mImageButton = view.findViewById(R.id.btnImage);
-        mVideoButton = view.findViewById(R.id.btnVideo);
-        mAudioButton = view.findViewById(R.id.btnAudio);
-        mCameraImageButton = view.findViewById(R.id.btnCameraImage);
-        mCameraVideoButton = view.findViewById(R.id.btnCameraVideo);
-        mMicButton = view.findViewById(R.id.btnMic);
-
-        mPublishButton.setOnClickListener(new View.OnClickListener() {
+        publishButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 submitPost();
             }
         });
 
-        mCameraImageButton.setOnClickListener(new View.OnClickListener() {
+        cameraImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dispatchTakePictureIntent();
+                if(checkPermissions()) takePicture();
             }
         });
 
-        mCameraVideoButton.setOnClickListener(new View.OnClickListener() {
+        cameraVideoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                dispatchTakeVideoIntent();
+                if(checkPermissions()) takeVideo();
             }
         });
 
-        mMicButton.setOnClickListener(new View.OnClickListener() {
+        recordAudioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 if(recording){
                     stopRecording();
                 } else {
-                    startRecording();
+                    if(checkPermissions()) startRecording();
                 }
                 recording = !recording;
             }
         });
 
-        mImageButton.setOnClickListener(new View.OnClickListener() {
+        galleryImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), RC_IMAGE_PICK);
+                if(checkPermissions()) startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI), RC_IMAGE_PICK);
             }
         });
 
-        mVideoButton.setOnClickListener(new View.OnClickListener() {
+        galleryVideoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI), RC_VIDEO_PICK);
+                if(checkPermissions()) startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI), RC_VIDEO_PICK);
             }
         });
 
-        mAudioButton.setOnClickListener(new View.OnClickListener() {
+        galleryAudioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI), RC_AUDIO_PICK);
+                if(checkPermissions()) startActivityForResult(new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI), RC_AUDIO_PICK);
             }
         });
+    }
+
+    boolean checkPermissions(){
+        if(!permissionsAcepted){
+            requestPermissions();
+        }
+        return permissionsAcepted;
+    }
+
+    private void requestPermissions(){
+        if(ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        || ActivityCompat.checkSelfPermission(requireActivity(), Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(requireActivity(), new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_EXTERNAL_STORAGE}, RC_PERMISSIONS);
+        } else {
+            permissionsAcepted = true;
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
-            case REQUEST_RECORD_AUDIO_PERMISSION:
-                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                break;
+        if (requestCode == RC_PERMISSIONS) {
+            permissionsAcepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
         }
     }
 
@@ -176,42 +169,40 @@ public class NewPostFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RC_IMAGE_TAKE && resultCode == RESULT_OK) {
-            mediaUri = mFileUri;
-            mediaType = "image";
-            GlideApp.with(this).load(mediaUri).into(imagePreview);
-        } else if (requestCode == RC_VIDEO_TAKE && resultCode == RESULT_OK) {
-            mediaUri = mFileUri;
-            mediaType = "video";
-            GlideApp.with(this).load(mediaUri).into(imagePreview);
-        }
+        if(resultCode != RESULT_OK) return;
 
-        else if(data != null) {
-            if (requestCode == RC_IMAGE_PICK) {
-                mediaUri = data.getData();
-                mediaType = "image";
-                GlideApp.with(this).load(mediaUri).into(imagePreview);
-            } else if (requestCode == RC_VIDEO_PICK) {
-                mediaUri = data.getData();
-                mediaType = "video";
-                GlideApp.with(this).load(mediaUri).into(imagePreview);
-            } else if (requestCode == RC_AUDIO_PICK) {
-                mediaUri = data.getData();
-                mediaType = "audio";
-                GlideApp.with(this).load(mediaUri).into(imagePreview);
-            }
+        if (requestCode == RC_IMAGE_TAKE) {
+            mediaUri = fileUri;
+            mediaType = "image";
+            GlideApp.with(this).load(mediaUri).into(previewImageView);
+        } else if (requestCode == RC_VIDEO_TAKE) {
+            mediaUri = fileUri;
+            mediaType = "video";
+            GlideApp.with(this).load(mediaUri).into(previewImageView);
+        } else if (requestCode == RC_IMAGE_PICK) {
+            mediaUri = data.getData();
+            mediaType = "image";
+            GlideApp.with(this).load(mediaUri).into(previewImageView);
+        } else if (requestCode == RC_VIDEO_PICK) {
+            mediaUri = data.getData();
+            mediaType = "video";
+            GlideApp.with(this).load(mediaUri).into(previewImageView);
+        } else if (requestCode == RC_AUDIO_PICK) {
+            mediaUri = data.getData();
+            mediaType = "audio";
+            GlideApp.with(this).load(mediaUri).into(previewImageView);
         }
     }
 
-    void submitPost(){
-        final String postText = mPostTextField.getText().toString();
+    private void submitPost(){
+        final String postText = contentEditText.getText().toString();
 
         if(postText.isEmpty()){
-            mPostTextField.setError("Required");
+            contentEditText.setError("Required");
             return;
         }
 
-        mPublishButton.setEnabled(false);
+        publishButton.setEnabled(false);
 
         if (mediaType == null) {
             writeNewPost(postText, null);
@@ -222,10 +213,8 @@ public class NewPostFragment extends Fragment {
     }
 
     private void writeNewPost(String postText, String mediaUrl) {
-        Post post = new Post(mUser.getUid(), mUser.getDisplayName(), mUser.getPhotoUrl().toString(), postText, mediaUrl, mediaType);
-
         db.collection("posts")
-                .add(post)
+                .add(new Post(user.getUid(), user.getDisplayName(), user.getPhotoUrl().toString(), postText, mediaUrl, mediaType))
                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
                     public void onSuccess(DocumentReference documentReference) {
@@ -236,36 +225,30 @@ public class NewPostFragment extends Fragment {
 
     private void uploadAndWriteNewPost(final String postText){
         if(mediaType != null) {
-            FirebaseStorage.getInstance().getReference(mediaType + "/" + UUID.randomUUID().toString() + mediaUri.getLastPathSegment()).putFile(mediaUri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                @Override
-                public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) {
-                    return task.getResult().getStorage().getDownloadUrl();
-                }
-            }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                @Override
-                public void onComplete(@NonNull Task<Uri> task) {
-                    if (task.isSuccessful()) {
-                        String downloadUri = task.getResult().toString();
-                        writeNewPost(postText, downloadUri);
-                    }
-                }
-            });
+            storage.getReference(mediaType + "/" + UUID.randomUUID())
+                    .putFile(mediaUri)
+                    .continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+                        @Override
+                        public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                            return task.getResult().getStorage().getDownloadUrl();
+                        }
+                    })
+                    .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            writeNewPost(postText, uri.toString());
+                        }
+                    });
         }
     }
 
 
 
-    private void dispatchTakePictureIntent() {
-
-        Uri fileUri = null;
-        try {
-            fileUri = MediaFiles.createFile(requireContext(), MediaFiles.Type.IMAGE).uri;
-        } catch (IOException ex) {
-            // No se pudo crear el fichero
-        }
+    private void takePicture() {
+        Uri fileUri = MediaFiles.createFile(requireContext(), MediaFiles.Type.IMAGE).uri;
 
         if (fileUri != null) {
-            mFileUri = fileUri;
+            this.fileUri = fileUri;
 
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
@@ -273,17 +256,11 @@ public class NewPostFragment extends Fragment {
         }
     }
 
-    private void dispatchTakeVideoIntent() {
-
-        Uri fileUri = null;
-        try {
-            fileUri = MediaFiles.createFile(requireContext(), MediaFiles.Type.VIDEO).uri;
-        } catch (IOException ex) {
-            // No se pudo crear el fichero
-        }
+    private void takeVideo() {
+        Uri fileUri =  MediaFiles.createFile(requireContext(), MediaFiles.Type.VIDEO).uri;
 
         if (fileUri != null) {
-            mFileUri = fileUri;
+            this.fileUri = fileUri;
 
             Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
@@ -291,13 +268,8 @@ public class NewPostFragment extends Fragment {
         }
     }
 
-    void startRecording(){
-        MediaFiles.UriPathFile file = null;
-        try {
-            file = MediaFiles.createFile(requireContext(), MediaFiles.Type.AUDIO);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void startRecording(){
+        MediaFiles.UriPathFile file = MediaFiles.createFile(requireContext(), MediaFiles.Type.AUDIO);
 
         if(file != null) {
             mRecorder = new MediaRecorder();
@@ -318,7 +290,7 @@ public class NewPostFragment extends Fragment {
         }
     }
 
-    void stopRecording(){
+    private void stopRecording(){
         if(mRecorder != null) {
             mRecorder.stop();
             mRecorder.release();

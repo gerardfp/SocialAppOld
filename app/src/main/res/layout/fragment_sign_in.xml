@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.SignInFragment"
-    android:layout_gravity="center_horizontal|center_vertical">
+    tools:context=".ui.SignInFragment">
+
 
     <com.google.android.gms.common.SignInButton
         android:id="@+id/signInButton"
@@ -15,6 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <ProgressBar
         android:id="@+id/signInProgressBar"
